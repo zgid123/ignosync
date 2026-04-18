@@ -9,5 +9,6 @@ export default defineConfig({
     globals: true,
     include: ['**/__tests__/**/*.spec.ts'],
     reporters: 'verbose',
+    setupFiles: ['src/__tests__/setup.ts'],
   },
 });
