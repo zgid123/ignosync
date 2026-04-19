@@ -1,7 +1,6 @@
 import * as fsModule from 'node:fs/promises';
 import prompts from 'prompts';
 import type { MockedFunction } from 'vitest';
-import { afterEach, beforeEach, describe, expect, it, suite, vi } from 'vitest';
 
 import { executeInitCommand } from '../../commands/init';
 

@@ -1,13 +1,11 @@
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 
-import type { IGithubTemplateFile } from '../../commands/init';
-
-export const GITHUB_TEMPLATES_API_URL =
-  'https://api.github.com/repos/zgid123/git-ignore/contents/templates';
-
-export const GITHUB_TEMPLATES_RAW_BASE_URL =
-  'https://raw.githubusercontent.com/zgid123/git-ignore/main/templates';
+import type { IGithubTemplateFile } from '../../commands/interface';
+import {
+  GITHUB_TEMPLATES_API_URL,
+  GITHUB_TEMPLATES_RAW_BASE_URL,
+} from '../../constants';
 
 const defaultGithubTemplateList: IGithubTemplateFile[] = [
   {
