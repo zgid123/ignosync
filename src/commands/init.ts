@@ -1,4 +1,10 @@
-import { appendFile, readdir, readFile, writeFile } from 'node:fs/promises';
+import {
+  access,
+  appendFile,
+  readdir,
+  readFile,
+  writeFile,
+} from 'node:fs/promises';
 import { resolve } from 'node:path';
 import axios from 'axios';
 import { Command } from 'commander';
@@ -23,6 +29,7 @@ export const initCommand = new Command('init')
 export async function executeInitCommand(): Promise<void> {
   const isDev = process.env.GIT_IGNORE_DEV === 'true';
   let templatesDirectoryPath = '';
+  const commonIgnorePath = await resolveCommonIgnorePath();
   const gitIgnorePath = resolve(
     process.cwd(),
     isDev ? '.gitignore-local' : '.gitignore',
@@ -102,14 +109,35 @@ export async function executeInitCommand(): Promise<void> {
   );
 
   await writeFile(gitIgnorePath, '', 'utf8');
+  const commonIgnoreContent = await readFile(commonIgnorePath, 'utf8');
+  const normalizedCommonIgnoreContent = commonIgnoreContent.trimEnd();
+  const commonSection = `#\n# -- common\n#\n${normalizedCommonIgnoreContent}\n`;
+
+  await appendFile(gitIgnorePath, commonSection, 'utf8');
 
   for (const fetchedTemplate of fetchedTemplates) {
     const { templateFile, content } = fetchedTemplate;
     const normalizedContent = content.trimEnd();
-    const section = `#\n# TechStack: ${templateFile}\n#\n${normalizedContent}\n`;
+    const section = `#\n# -- ${templateFile}\n#\n${normalizedContent}\n`;
 
     await appendFile(gitIgnorePath, section, 'utf8');
   }
 
   console.log('Process completed.');
+}
+
+async function resolveCommonIgnorePath(): Promise<string> {
+  const commonIgnorePaths = [
+    resolve(__dirname, './common.ignore'),
+    resolve(__dirname, '../common.ignore'),
+  ];
+
+  for (const commonIgnorePath of commonIgnorePaths) {
+    try {
+      await access(commonIgnorePath);
+      return commonIgnorePath;
+    } catch (_error) {}
+  }
+
+  throw new Error('Cannot find common.ignore file');
 }

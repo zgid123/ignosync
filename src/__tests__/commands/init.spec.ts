@@ -15,6 +15,7 @@ vi.mock('prompts', () => {
 
 vi.mock('node:fs/promises', () => {
   return {
+    access: vi.fn(),
     readdir: vi.fn(),
     readFile: vi.fn(),
     writeFile: vi.fn(),
@@ -45,9 +46,11 @@ describe('#executeInitCommand', () => {
       const fsModule = await import('node:fs/promises');
 
       const mockedPrompts = vi.mocked(promptsModule.default);
+      const mockedAccess = vi.mocked(fsModule.access);
       const mockedReadDir = vi.mocked(fsModule.readdir);
       const mockedReadFile = vi.mocked(fsModule.readFile);
 
+      mockedAccess.mockResolvedValue(undefined);
       mockedReadDir.mockResolvedValue([
         'Node.js',
         'Vitest',
@@ -58,6 +61,10 @@ describe('#executeInitCommand', () => {
 
       mockedReadFile.mockImplementation(async (filePath) => {
         const filePathValue = String(filePath);
+
+        if (filePathValue.endsWith('/common.ignore')) {
+          return '.DS_Store\n';
+        }
 
         if (filePathValue.endsWith('/templates/Node.js')) {
           return 'node_modules\n';
@@ -78,14 +85,22 @@ describe('#executeInitCommand', () => {
         '',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenCalledWith(
+      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        1,
         expect.stringMatching(/\.gitignore-local$/),
-        '#\n# TechStack: Node.js\n#\nnode_modules\n',
+        '#\n# -- common\n#\n.DS_Store\n',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenCalledWith(
+      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        2,
         expect.stringMatching(/\.gitignore-local$/),
-        '#\n# TechStack: Vitest\n#\ncoverage\n',
+        '#\n# -- Node.js\n#\nnode_modules\n',
+        'utf8',
+      );
+      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        3,
+        expect.stringMatching(/\.gitignore-local$/),
+        '#\n# -- Vitest\n#\ncoverage\n',
         'utf8',
       );
     });
@@ -97,6 +112,8 @@ describe('#executeInitCommand', () => {
       const fsModule = await import('node:fs/promises');
 
       const mockedPrompts = vi.mocked(promptsModule.default);
+      const mockedAccess = vi.mocked(fsModule.access);
+      const mockedReadFile = vi.mocked(fsModule.readFile);
       const githubTemplateList: IGithubTemplateFile[] = [
         {
           type: 'file',
@@ -120,19 +137,31 @@ describe('#executeInitCommand', () => {
         }),
       );
 
+      mockedAccess.mockResolvedValue(undefined);
       mockedPrompts.mockResolvedValue(createPromptsAnswer(['osx.ignore']));
+      mockedReadFile.mockResolvedValue('.DS_Store\n');
 
       await executeInitCommand();
 
-      expect(fsModule.readFile).not.toHaveBeenCalled();
+      expect(fsModule.readFile).toHaveBeenCalledWith(
+        expect.stringMatching(/common\.ignore$/),
+        'utf8',
+      );
       expect(fsModule.writeFile).toHaveBeenCalledWith(
         expect.stringMatching(/\.gitignore$/),
         '',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenCalledWith(
+      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        1,
         expect.stringMatching(/\.gitignore$/),
-        '#\n# TechStack: osx.ignore\n#\n.DS_Store\n',
+        '#\n# -- common\n#\n.DS_Store\n',
+        'utf8',
+      );
+      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        2,
+        expect.stringMatching(/\.gitignore$/),
+        '#\n# -- osx.ignore\n#\n.DS_Store\n',
         'utf8',
       );
     });
