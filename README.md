@@ -1,62 +1,107 @@
-# git-ignore
+# ignorify
 
-A lightweight CLI to generate `.gitignore` from selected tech-stack templates.
+A CLI to generate and maintain `.gitignore` using reusable templates.
+
+## What It Does
+
+- Generates `.gitignore` from selected templates (`init`)
+- Updates existing generated sections to the latest template content (`update`)
+- Preserves your custom rules block at the end of the file
 
 ## Install
 
 ```bash
-npm install -g git-ignore
+npm install -g ignorify
 ```
 
-## Usage
+## Quick Start
 
-Run:
+Generate `.gitignore` in your current folder:
 
 ```bash
-git-ignore init
+ignorify init
 ```
 
-The CLI will show an interactive list of tech stacks.  
-After you choose, it generates a `.gitignore` file in your current directory.
+Update existing generated template sections:
 
-## Output Format
+```bash
+ignorify update
+```
 
-The generated file is grouped by selected tech stack:
+## Commands
+
+### `ignorify init`
+
+1. Loads available templates.
+2. Prompts you to select one or more templates.
+3. Rewrites the output file.
+
+Output file: `.gitignore`
+
+### `ignorify update`
+
+1. Reads existing section headers in your current file (`# -- <name>`).
+2. Fetches latest content for those section names.
+3. Rewrites generated sections while keeping your custom block.
+
+## Generated File Format
+
+Generated content is grouped into sections:
 
 ```gitignore
 #
-# TechStack: Node.js
+# -- common
 #
-node_modules
-.env
+<content from common.ignore>
+#
+# -- Node.js
+#
+<content from template>
 ```
 
-## Development Mode
+## Custom Rules Block
 
-Set `GIT_IGNORE_DEV=true` to use local templates from `templates/` instead of fetching from GitHub.
+If your gitignore file already contains this tail block:
 
-In development mode:
-- output file is `.gitignore-local`
-- template source is local files under `templates/`
-
-Run locally:
-
-```bash
-pnpm local:run init
+```gitignore
+#
+# ---
+#
+<your custom rules>
 ```
 
-## Available Tech Stacks
+it is preserved and appended again after generation/update.
 
-- Node.js
-- OSX
-- TypeScript
-- Vitest
+## Template Source
+
+- Templates are fetched from the GitHub `templates` directory.
 
 ## Development
 
+Install dependencies:
+
 ```bash
 pnpm install
+```
+
+Run locally in dev mode:
+
+```bash
+pnpm local:run init
+pnpm local:run update
+```
+
+Note: `GIT_IGNORE_DEV=true` and `.gitignore-local` are internal development flows, not public usage.
+
+Build:
+
+```bash
 pnpm build
+```
+
+Test:
+
+```bash
 pnpm test
 ```
 
