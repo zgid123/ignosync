@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { Command } from 'commander';
-import prompts from 'prompts';
 
 import {
+  extractSectionNames,
   fetchTemplateContents,
   getCustomIgnoreSection,
   getGitIgnorePath,
@@ -11,34 +11,31 @@ import {
   writeGeneratedGitIgnore,
 } from '../utils';
 
-export const initCommand = new Command('init')
-  .description('Initialize git-ignore in current project')
-  .action(executeInitCommand);
+export const updateCommand = new Command('update')
+  .description('Update existing .gitignore template sections')
+  .action(executeUpdateCommand);
 
-export async function executeInitCommand(): Promise<void> {
+export async function executeUpdateCommand(): Promise<void> {
   const gitIgnorePath = getGitIgnorePath();
 
+  const currentGitIgnoreContent = await readFile(gitIgnorePath, 'utf8');
   const customIgnoreSection = await getCustomIgnoreSection({
     gitIgnorePath,
   });
   const { templateFiles, templatesDirectoryPath } = await loadTemplateFiles();
 
-  const choices = templateFiles.map((templateFile) => {
-    return {
-      title: templateFile.fileName,
-      value: templateFile.fileName,
-    };
+  const allSectionNames = extractSectionNames({
+    content: currentGitIgnoreContent,
   });
-
-  const answer = await prompts({
-    choices,
-    name: 'techStacks',
-    type: 'multiselect',
-    instructions: false,
-    message: 'Select templates:',
+  const selectedTemplateFiles = allSectionNames.filter((sectionName) => {
+    return (
+      sectionName !== 'common' &&
+      sectionName !== '---' &&
+      templateFiles.some(
+        (templateFile) => templateFile.fileName === sectionName,
+      )
+    );
   });
-
-  const selectedTemplateFiles: string[] = answer.techStacks ?? [];
 
   const fetchedTemplates = await fetchTemplateContents({
     templateFiles,
