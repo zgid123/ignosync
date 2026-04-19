@@ -1,0 +1,5 @@
+---
+"ignorify": patch
+---
+
+release
