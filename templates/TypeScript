@@ -1,0 +1,53 @@
+*.tsbuildinfo
+node_modules
+.pnp
+.pnp.js
+#
+# build output
+#
+lib
+dist
+dist-ssr
+#
+# Next.js
+#
+.next/
+/out/
+next-env.d.ts
+#
+# Vercel
+#
+.vercel
+#
+# monorepo
+#
+.turbo
+#
+# vitepress
+#
+docs/.vitepress/cache
+docs/.vitepress/dist
+#
+# test
+#
+coverage
+.nyc_output
+#
+# logs
+#
+logs
+*.log
+#
+# Storybook
+#
+*storybook.log
+storybook-static
+#
+# Tanstack Start
+#
+count.txt
+.nitro
+.tanstack
+.output
+.vinxi
+todos.json

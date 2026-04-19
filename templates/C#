@@ -1,0 +1,48 @@
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+#
+# User-specific files
+#
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+#
+# NuGet
+#
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+!**/[Pp]ackages/repositories.config
+*.nuget.props
+*.nuget.targets
+#
+# Dotnet local tools and generated files
+#
+.dotnet/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+#
+# Test results and coverage
+#
+[Tt]est[Rr]esult*/
+[Bb]enchmark[Dd]ot[Nn]et.Artifacts/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+#
+# Local settings and secrets
+#
+appsettings.Development.json
+appsettings.Local.json
+secrets.json

@@ -1,0 +1,24 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+tmp/
+log
+.byebug_history
+storage
+!/log/.keep
+!/tmp/.keep
+!/tmp/pids/.keep
+!/storage/.keep
+!/tmp/storage/.keep
+/config/master.key
+/config/database.yml
+#
+# JavaScript
+#
+node_modules
+docs/.vitepress/cache
+docs/.vitepress/dist

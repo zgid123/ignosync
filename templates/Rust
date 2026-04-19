@@ -1,0 +1,14 @@
+/target
+Cargo.lock
+#
+# Tauri
+#
+/src-tauri/target
+/src-tauri/binaries
+/src-tauri/gen
+**/.tauri
+dist-js
+#
+# logs
+#
+*.log

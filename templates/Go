@@ -1,0 +1,37 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+**/bin/
+#
+# test
+#
+coverage.*
+*.cover
+*.coverprofile
+*.cov
+*.lcov
+#
+# Go workspaces
+#
+go.work
+go.work.sum
+#
+# logs
+#
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+#
+# Vendoring
+vendor/
+#
+# Build artifacts
+#
+dist/
+build/
