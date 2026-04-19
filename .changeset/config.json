@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "zgid123/git-ignore"
+      "repo": "zgid123/ignorify"
     }
   ],
   "commit": true,

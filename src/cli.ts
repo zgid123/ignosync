@@ -6,7 +6,7 @@ import { initCommand } from './commands/init';
 import { updateCommand } from './commands/update';
 
 program
-  .name('git-ignore')
+  .name('ignorify')
   .description('Create .gitignore for specific TechStacks')
   .version('0.0.1');
 

@@ -12,7 +12,7 @@ import {
 } from '../utils';
 
 export const initCommand = new Command('init')
-  .description('Initialize git-ignore in current project')
+  .description('Initialize ignorify in current project')
   .action(executeInitCommand);
 
 export async function executeInitCommand(): Promise<void> {
