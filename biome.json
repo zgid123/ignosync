@@ -2,5 +2,11 @@
   "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
   "extends": [
     "@alphacifer/biome/config"
-  ]
+  ],
+  "files": {
+    "includes": [
+      "**",
+      "!templates"
+    ]
+  }
 }

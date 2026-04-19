@@ -1,0 +1,21 @@
+#
+# editor
+#
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+#
+# OS
+#
+.DS_Store
+Thumbs.db
+Desktop.ini
+._*
+#
+# .env
+#
+.env
+.env.*.local
