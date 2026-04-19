@@ -3,8 +3,8 @@ import { resolve } from 'node:path';
 
 export async function resolveCommonIgnorePath(): Promise<string> {
   const commonIgnorePaths = [
+    resolve(__dirname, './common.ignore'),
     resolve(__dirname, '../common.ignore'),
-    resolve(__dirname, '../../src/common.ignore'),
   ];
 
   for (const commonIgnorePath of commonIgnorePaths) {
