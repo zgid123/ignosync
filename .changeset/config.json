@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "zgid123/ignify"
+      "repo": "zgid123/ignosync"
     }
   ],
   "commit": true,

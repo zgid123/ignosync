@@ -1,4 +1,4 @@
-# ignify
+# ignosync
 
 A CLI to generate and maintain `.gitignore` using reusable templates.
 
@@ -11,7 +11,7 @@ A CLI to generate and maintain `.gitignore` using reusable templates.
 ## Install
 
 ```bash
-npm install -g ignify
+npm install -g ignosync
 ```
 
 ## Quick Start
@@ -19,18 +19,18 @@ npm install -g ignify
 Generate `.gitignore` in your current folder:
 
 ```bash
-ignify init
+ignosync init
 ```
 
 Update existing generated template sections:
 
 ```bash
-ignify update
+ignosync update
 ```
 
 ## Commands
 
-### `ignify init`
+### `ignosync init`
 
 1. Loads available templates.
 2. Prompts you to select one or more templates.
@@ -38,7 +38,7 @@ ignify update
 
 Output file: `.gitignore`
 
-### `ignify update`
+### `ignosync update`
 
 1. Reads existing section headers in your current file (`# -- <name>`).
 2. Fetches latest content for those section names.

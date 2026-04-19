@@ -12,7 +12,7 @@ import {
 } from '../utils';
 
 export const initCommand = new Command('init')
-  .description('Initialize ignify in current project')
+  .description('Initialize ignosync in current project')
   .action(executeInitCommand);
 
 export async function executeInitCommand(): Promise<void> {

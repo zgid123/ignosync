@@ -1,11 +1,11 @@
 {
-  "name": "ignify",
+  "name": "ignosync",
   "version": "0.0.1",
   "description": "Create .gitignore for specific TechStacks",
   "author": "Alpha",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zgid123/ignify.git"
+    "url": "git+https://github.com/zgid123/ignosync.git"
   },
   "keywords": [
     "git",
@@ -15,7 +15,7 @@
   ],
   "license": "MIT",
   "bin": {
-    "ignify": "./lib/cli.cjs"
+    "ignosync": "./lib/cli.cjs"
   },
   "files": [
     "lib"
