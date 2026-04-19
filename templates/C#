@@ -6,6 +6,10 @@ x64/
 x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
+.vs
+*.swp
+*.*~
+*.pyc
 #
 # User-specific files
 #
@@ -17,6 +21,7 @@ x86/
 #
 # NuGet
 #
+nupkg/
 *.nupkg
 *.snupkg
 **/[Pp]ackages/*

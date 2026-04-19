@@ -1,11 +1,9 @@
-import { HttpResponse, http } from 'msw';
+import * as fsModule from 'node:fs/promises';
+import prompts from 'prompts';
+import type { MockedFunction } from 'vitest';
 import { afterEach, beforeEach, describe, expect, it, suite, vi } from 'vitest';
 
-import {
-  executeInitCommand,
-  type IGithubTemplateFile,
-} from '../../commands/init';
-import { server } from '../mocks/server';
+import { executeInitCommand } from '../../commands/init';
 
 vi.mock('prompts', () => {
   return {
@@ -29,141 +27,202 @@ function createPromptsAnswer(techStacks: string[]): { techStacks: string[] } {
   };
 }
 
+type TReadFilePath = Parameters<typeof import('node:fs/promises').readFile>[0];
+
 describe('#executeInitCommand', () => {
-  beforeEach(() => {
+  let mockedPrompts: MockedFunction<typeof prompts>;
+  let mockedAccess: MockedFunction<typeof fsModule.access>;
+  let mockedReadDir: MockedFunction<typeof fsModule.readdir>;
+  let mockedReadFile: MockedFunction<typeof fsModule.readFile>;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    mockedPrompts = vi.mocked(prompts);
+    mockedAccess = vi.mocked(fsModule.access);
+    mockedReadDir = vi.mocked(fsModule.readdir);
+    mockedReadFile = vi.mocked(fsModule.readFile);
+
+    mockedAccess.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
     delete process.env.GIT_IGNORE_DEV;
   });
 
-  suite('when GIT_IGNORE_DEV is true', () => {
-    it('reads templates from local folder and writes .gitignore-local', async () => {
-      process.env.GIT_IGNORE_DEV = 'true';
+  function mockDevTemplateFlow(existingGitignoreContent: string): void {
+    mockedReadDir.mockResolvedValue(['Node.js', 'Vitest'] as unknown as Awaited<
+      ReturnType<typeof import('node:fs/promises')['readdir']>
+    >);
+    mockedPrompts.mockResolvedValue(createPromptsAnswer(['Node.js', 'Vitest']));
+    mockedReadFile.mockImplementation(async (filePath: TReadFilePath) => {
+      const filePathValue = String(filePath);
 
-      const promptsModule = await import('prompts');
-      const fsModule = await import('node:fs/promises');
+      if (filePathValue.endsWith('/.gitignore-local')) {
+        return existingGitignoreContent;
+      }
 
-      const mockedPrompts = vi.mocked(promptsModule.default);
-      const mockedAccess = vi.mocked(fsModule.access);
-      const mockedReadDir = vi.mocked(fsModule.readdir);
-      const mockedReadFile = vi.mocked(fsModule.readFile);
+      if (filePathValue.endsWith('/common.ignore')) {
+        return '.DS_Store\n';
+      }
 
-      mockedAccess.mockResolvedValue(undefined);
-      mockedReadDir.mockResolvedValue([
-        'Node.js',
-        'Vitest',
-      ] as unknown as Awaited<ReturnType<typeof fsModule.readdir>>);
-      mockedPrompts.mockResolvedValue(
-        createPromptsAnswer(['Node.js', 'Vitest']),
-      );
+      if (filePathValue.endsWith('/templates/Node.js')) {
+        return 'node_modules\n';
+      }
 
-      mockedReadFile.mockImplementation(async (filePath) => {
-        const filePathValue = String(filePath);
+      if (filePathValue.endsWith('/templates/Vitest')) {
+        return 'coverage\n';
+      }
 
-        if (filePathValue.endsWith('/common.ignore')) {
-          return '.DS_Store\n';
-        }
+      throw new Error(`Unexpected file path: ${filePathValue}`);
+    });
+  }
 
-        if (filePathValue.endsWith('/templates/Node.js')) {
-          return 'node_modules\n';
-        }
+  function mockRemoteTemplateFlow(existingGitignoreContent: string): void {
+    mockedPrompts.mockResolvedValue(createPromptsAnswer(['osx.ignore']));
+    mockedReadFile.mockImplementation(async (filePath: TReadFilePath) => {
+      const filePathValue = String(filePath);
 
-        if (filePathValue.endsWith('/templates/Vitest')) {
-          return 'coverage\n';
-        }
+      if (filePathValue.endsWith('/.gitignore')) {
+        return existingGitignoreContent;
+      }
 
-        throw new Error(`Unexpected file path: ${filePathValue}`);
+      if (filePathValue.endsWith('/common.ignore')) {
+        return '.DS_Store\n';
+      }
+
+      throw new Error(`Unexpected file path: ${filePathValue}`);
+    });
+  }
+
+  describe('when GIT_IGNORE_DEV is true', () => {
+    suite('when .gitignore-local has no custom block', () => {
+      it('writes only common and selected template sections', async () => {
+        process.env.GIT_IGNORE_DEV = 'true';
+
+        mockDevTemplateFlow('old-rule\n');
+
+        await executeInitCommand();
+
+        expect(fsModule.readdir).toHaveBeenCalledTimes(1);
+        expect(fsModule.writeFile).toHaveBeenCalledWith(
+          expect.stringMatching(/\.gitignore-local$/),
+          '',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          1,
+          expect.stringMatching(/\.gitignore-local$/),
+          '#\n# -- common\n#\n.DS_Store\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          2,
+          expect.stringMatching(/\.gitignore-local$/),
+          '#\n# -- Node.js\n#\nnode_modules\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          3,
+          expect.stringMatching(/\.gitignore-local$/),
+          '#\n# -- Vitest\n#\ncoverage\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenCalledTimes(3);
       });
+    });
 
-      await executeInitCommand();
+    suite('when .gitignore-local has a custom block', () => {
+      it('restores the custom block at the end', async () => {
+        process.env.GIT_IGNORE_DEV = 'true';
 
-      expect(fsModule.readdir).toHaveBeenCalledTimes(1);
-      expect(fsModule.writeFile).toHaveBeenCalledWith(
-        expect.stringMatching(/\.gitignore-local$/),
-        '',
-        'utf8',
-      );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
-        1,
-        expect.stringMatching(/\.gitignore-local$/),
-        '#\n# -- common\n#\n.DS_Store\n',
-        'utf8',
-      );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
-        2,
-        expect.stringMatching(/\.gitignore-local$/),
-        '#\n# -- Node.js\n#\nnode_modules\n',
-        'utf8',
-      );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
-        3,
-        expect.stringMatching(/\.gitignore-local$/),
-        '#\n# -- Vitest\n#\ncoverage\n',
-        'utf8',
-      );
+        mockDevTemplateFlow('old-rule\n#\n# ---\n#\ncustom-local\n');
+
+        await executeInitCommand();
+
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          1,
+          expect.stringMatching(/\.gitignore-local$/),
+          '#\n# -- common\n#\n.DS_Store\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          2,
+          expect.stringMatching(/\.gitignore-local$/),
+          '#\n# -- Node.js\n#\nnode_modules\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          3,
+          expect.stringMatching(/\.gitignore-local$/),
+          '#\n# -- Vitest\n#\ncoverage\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          4,
+          expect.stringMatching(/\.gitignore-local$/),
+          '#\n# ---\n#\ncustom-local\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenCalledTimes(4);
+      });
     });
   });
 
-  suite('when GIT_IGNORE_DEV is not true', () => {
-    it('fetches template list first and then selected template files', async () => {
-      const promptsModule = await import('prompts');
-      const fsModule = await import('node:fs/promises');
+  describe('when GIT_IGNORE_DEV is not true', () => {
+    suite('when .gitignore has no custom block', () => {
+      it('writes only common and selected template sections', async () => {
+        mockRemoteTemplateFlow('old-rule\n');
 
-      const mockedPrompts = vi.mocked(promptsModule.default);
-      const mockedAccess = vi.mocked(fsModule.access);
-      const mockedReadFile = vi.mocked(fsModule.readFile);
-      const githubTemplateList: IGithubTemplateFile[] = [
-        {
-          type: 'file',
-          name: 'osx.ignore',
-          // biome-ignore lint/style/useNamingConvention: ignore
-          download_url:
-            'https://raw.githubusercontent.com/zgid123/git-ignore/main/templates/osx.ignore',
-        },
-      ];
-      const githubApiUrl =
-        'https://api.github.com/repos/zgid123/git-ignore/contents/templates';
-      const githubTemplateRawUrl =
-        'https://raw.githubusercontent.com/zgid123/git-ignore/main/templates/osx.ignore';
+        await executeInitCommand();
 
-      server.use(
-        http.get(githubApiUrl, () => {
-          return HttpResponse.json(githubTemplateList);
-        }),
-        http.get(githubTemplateRawUrl, () => {
-          return new HttpResponse('.DS_Store\n');
-        }),
-      );
+        expect(fsModule.writeFile).toHaveBeenCalledWith(
+          expect.stringMatching(/\.gitignore$/),
+          '',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          1,
+          expect.stringMatching(/\.gitignore$/),
+          '#\n# -- common\n#\n.DS_Store\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          2,
+          expect.stringMatching(/\.gitignore$/),
+          '#\n# -- osx.ignore\n#\n.DS_Store\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenCalledTimes(2);
+      });
+    });
 
-      mockedAccess.mockResolvedValue(undefined);
-      mockedPrompts.mockResolvedValue(createPromptsAnswer(['osx.ignore']));
-      mockedReadFile.mockResolvedValue('.DS_Store\n');
+    suite('when .gitignore has a custom block', () => {
+      it('restores the custom block at the end', async () => {
+        mockRemoteTemplateFlow('old-rule\n#\n# ---\n#\ncustom-remote\n');
 
-      await executeInitCommand();
+        await executeInitCommand();
 
-      expect(fsModule.readFile).toHaveBeenCalledWith(
-        expect.stringMatching(/common\.ignore$/),
-        'utf8',
-      );
-      expect(fsModule.writeFile).toHaveBeenCalledWith(
-        expect.stringMatching(/\.gitignore$/),
-        '',
-        'utf8',
-      );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
-        1,
-        expect.stringMatching(/\.gitignore$/),
-        '#\n# -- common\n#\n.DS_Store\n',
-        'utf8',
-      );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
-        2,
-        expect.stringMatching(/\.gitignore$/),
-        '#\n# -- osx.ignore\n#\n.DS_Store\n',
-        'utf8',
-      );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          1,
+          expect.stringMatching(/\.gitignore$/),
+          '#\n# -- common\n#\n.DS_Store\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          2,
+          expect.stringMatching(/\.gitignore$/),
+          '#\n# -- osx.ignore\n#\n.DS_Store\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+          3,
+          expect.stringMatching(/\.gitignore$/),
+          '#\n# ---\n#\ncustom-remote\n',
+          'utf8',
+        );
+        expect(fsModule.appendFile).toHaveBeenCalledTimes(3);
+      });
     });
   });
 });

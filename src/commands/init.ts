@@ -29,11 +29,12 @@ export const initCommand = new Command('init')
 export async function executeInitCommand(): Promise<void> {
   const isDev = process.env.GIT_IGNORE_DEV === 'true';
   let templatesDirectoryPath = '';
-  const commonIgnorePath = await resolveCommonIgnorePath();
   const gitIgnorePath = resolve(
     process.cwd(),
     isDev ? '.gitignore-local' : '.gitignore',
   );
+
+  const customIgnoreSection = await getCustomIgnoreSection(gitIgnorePath);
 
   let templateFiles: ITemplateFileSource[] = [];
 
@@ -109,7 +110,9 @@ export async function executeInitCommand(): Promise<void> {
   );
 
   await writeFile(gitIgnorePath, '', 'utf8');
+  const commonIgnorePath = await resolveCommonIgnorePath();
   const commonIgnoreContent = await readFile(commonIgnorePath, 'utf8');
+
   const normalizedCommonIgnoreContent = commonIgnoreContent.trimEnd();
   const commonSection = `#\n# -- common\n#\n${normalizedCommonIgnoreContent}\n`;
 
@@ -123,7 +126,33 @@ export async function executeInitCommand(): Promise<void> {
     await appendFile(gitIgnorePath, section, 'utf8');
   }
 
+  if (customIgnoreSection.length > 0) {
+    await appendFile(gitIgnorePath, customIgnoreSection, 'utf8');
+  }
+
   console.log('Process completed.');
+}
+
+async function getCustomIgnoreSection(gitIgnorePath: string): Promise<string> {
+  try {
+    const existingGitIgnoreContent = await readFile(gitIgnorePath, 'utf8');
+
+    const customSectionMatch = existingGitIgnoreContent.match(
+      /(^|\n)#\n# ---\n#\n[\s\S]*$/,
+    );
+
+    if (!customSectionMatch) {
+      return '';
+    }
+
+    const rawCustomSection = customSectionMatch[0].startsWith('\n')
+      ? customSectionMatch[0].slice(1)
+      : customSectionMatch[0];
+
+    return `${rawCustomSection.trimEnd()}\n`;
+  } catch {
+    return '';
+  }
 }
 
 async function resolveCommonIgnorePath(): Promise<string> {
@@ -135,8 +164,11 @@ async function resolveCommonIgnorePath(): Promise<string> {
   for (const commonIgnorePath of commonIgnorePaths) {
     try {
       await access(commonIgnorePath);
+
       return commonIgnorePath;
-    } catch (_error) {}
+    } catch {
+      // Ignore ENOENT errors
+    }
   }
 
   throw new Error('Cannot find common.ignore file');
