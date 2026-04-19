@@ -1,5 +1,0 @@
----
-"ignosync": patch
----
-
-release
