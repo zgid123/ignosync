@@ -20,3 +20,7 @@ Desktop.ini
 #
 .env
 .env.*.local
+#
+# other
+#
+tmp
