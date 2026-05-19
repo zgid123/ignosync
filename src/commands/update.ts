@@ -4,10 +4,10 @@ import { Command } from 'commander';
 import {
   extractSectionNames,
   fetchTemplateContents,
+  getCommonIgnoreContent,
   getCustomIgnoreSection,
   getGitIgnorePath,
   loadTemplateFiles,
-  resolveCommonIgnorePath,
   writeGeneratedGitIgnore,
 } from '../utils';
 
@@ -42,8 +42,7 @@ export async function executeUpdateCommand(): Promise<void> {
     selectedTemplateFiles,
     templatesDirectoryPath,
   });
-  const commonIgnorePath = await resolveCommonIgnorePath();
-  const commonIgnoreContent = await readFile(commonIgnorePath, 'utf8');
+  const commonIgnoreContent = await getCommonIgnoreContent();
   await writeGeneratedGitIgnore({
     gitIgnorePath,
     fetchedTemplates,

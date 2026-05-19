@@ -25,14 +25,20 @@ export async function loadTemplateFiles(): Promise<ILoadTemplateFilesResult> {
   if (isDev) {
     templatesDirectoryPath = resolve(__dirname, '../../templates');
 
-    const localTemplateFiles = await readdir(templatesDirectoryPath);
-
-    templateFiles = localTemplateFiles.sort().map((fileName) => {
-      return {
-        fileName,
-        downloadUrl: null,
-      };
+    const localTemplateFiles = await readdir(templatesDirectoryPath, {
+      withFileTypes: true,
     });
+
+    templateFiles = localTemplateFiles
+      .filter((dirent) => dirent.isFile())
+      .map((dirent) => dirent.name)
+      .sort()
+      .map((fileName) => {
+        return {
+          fileName,
+          downloadUrl: null,
+        };
+      });
   } else {
     const response = await axios.get<IGithubTemplateFile[]>(
       GITHUB_TEMPLATES_API_URL,

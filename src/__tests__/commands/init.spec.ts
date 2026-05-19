@@ -1,4 +1,10 @@
-import * as fsModule from 'node:fs/promises';
+import {
+  access,
+  appendFile,
+  readdir,
+  readFile,
+  writeFile,
+} from 'node:fs/promises';
 import prompts from 'prompts';
 import type { MockedFunction } from 'vitest';
 
@@ -30,17 +36,17 @@ type TReadFilePath = Parameters<typeof import('node:fs/promises').readFile>[0];
 
 describe('#executeInitCommand', () => {
   let mockedPrompts: MockedFunction<typeof prompts>;
-  let mockedAccess: MockedFunction<typeof fsModule.access>;
-  let mockedReadDir: MockedFunction<typeof fsModule.readdir>;
-  let mockedReadFile: MockedFunction<typeof fsModule.readFile>;
+  let mockedAccess: MockedFunction<typeof access>;
+  let mockedReadDir: MockedFunction<typeof readdir>;
+  let mockedReadFile: MockedFunction<typeof readFile>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     mockedPrompts = vi.mocked(prompts);
-    mockedAccess = vi.mocked(fsModule.access);
-    mockedReadDir = vi.mocked(fsModule.readdir);
-    mockedReadFile = vi.mocked(fsModule.readFile);
+    mockedAccess = vi.mocked(access);
+    mockedReadDir = vi.mocked(readdir);
+    mockedReadFile = vi.mocked(readFile);
 
     mockedAccess.mockResolvedValue(undefined);
   });
@@ -50,9 +56,20 @@ describe('#executeInitCommand', () => {
   });
 
   function mockDevTemplateFlow(existingGitignoreContent: string): void {
-    mockedReadDir.mockResolvedValue(['Node.js', 'Vitest'] as unknown as Awaited<
-      ReturnType<typeof import('node:fs/promises')['readdir']>
-    >);
+    mockedReadDir.mockResolvedValue([
+      {
+        name: 'Node.js',
+        isFile: () => true,
+      },
+      {
+        name: 'Vitest',
+        isFile: () => true,
+      },
+      {
+        name: 'common',
+        isFile: () => false,
+      },
+    ] as unknown as Awaited<ReturnType<typeof readdir>>);
     mockedPrompts.mockResolvedValue(createPromptsAnswer(['Node.js', 'Vitest']));
     mockedReadFile.mockImplementation(async (filePath: TReadFilePath) => {
       const filePathValue = String(filePath);
@@ -61,7 +78,7 @@ describe('#executeInitCommand', () => {
         return existingGitignoreContent;
       }
 
-      if (filePathValue.endsWith('/common.ignore')) {
+      if (filePathValue.endsWith('/templates/common/common.ignore')) {
         return '.DS_Store\n';
       }
 
@@ -86,10 +103,6 @@ describe('#executeInitCommand', () => {
         return existingGitignoreContent;
       }
 
-      if (filePathValue.endsWith('/common.ignore')) {
-        return '.DS_Store\n';
-      }
-
       throw new Error(`Unexpected file path: ${filePathValue}`);
     });
   }
@@ -103,31 +116,31 @@ describe('#executeInitCommand', () => {
 
         await executeInitCommand();
 
-        expect(fsModule.readdir).toHaveBeenCalledTimes(1);
-        expect(fsModule.writeFile).toHaveBeenCalledWith(
+        expect(readdir).toHaveBeenCalledTimes(1);
+        expect(writeFile).toHaveBeenCalledWith(
           expect.stringMatching(/\.gitignore-local$/),
           '',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           1,
           expect.stringMatching(/\.gitignore-local$/),
           '#\n# -- common\n#\n.DS_Store\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           2,
           expect.stringMatching(/\.gitignore-local$/),
           '#\n# -- Node.js\n#\nnode_modules\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           3,
           expect.stringMatching(/\.gitignore-local$/),
           '#\n# -- Vitest\n#\ncoverage\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenCalledTimes(3);
+        expect(appendFile).toHaveBeenCalledTimes(3);
       });
     });
 
@@ -139,31 +152,31 @@ describe('#executeInitCommand', () => {
 
         await executeInitCommand();
 
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           1,
           expect.stringMatching(/\.gitignore-local$/),
           '#\n# -- common\n#\n.DS_Store\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           2,
           expect.stringMatching(/\.gitignore-local$/),
           '#\n# -- Node.js\n#\nnode_modules\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           3,
           expect.stringMatching(/\.gitignore-local$/),
           '#\n# -- Vitest\n#\ncoverage\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           4,
           expect.stringMatching(/\.gitignore-local$/),
           '#\n# ---\n#\ncustom-local\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenCalledTimes(4);
+        expect(appendFile).toHaveBeenCalledTimes(4);
       });
     });
   });
@@ -175,24 +188,24 @@ describe('#executeInitCommand', () => {
 
         await executeInitCommand();
 
-        expect(fsModule.writeFile).toHaveBeenCalledWith(
+        expect(writeFile).toHaveBeenCalledWith(
           expect.stringMatching(/\.gitignore$/),
           '',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           1,
           expect.stringMatching(/\.gitignore$/),
-          '#\n# -- common\n#\n.DS_Store\n',
+          '#\n# -- common\n#\nnode_modules\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           2,
           expect.stringMatching(/\.gitignore$/),
           '#\n# -- osx.ignore\n#\n.DS_Store\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenCalledTimes(2);
+        expect(appendFile).toHaveBeenCalledTimes(2);
       });
     });
 
@@ -202,25 +215,25 @@ describe('#executeInitCommand', () => {
 
         await executeInitCommand();
 
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           1,
           expect.stringMatching(/\.gitignore$/),
-          '#\n# -- common\n#\n.DS_Store\n',
+          '#\n# -- common\n#\nnode_modules\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           2,
           expect.stringMatching(/\.gitignore$/),
           '#\n# -- osx.ignore\n#\n.DS_Store\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+        expect(appendFile).toHaveBeenNthCalledWith(
           3,
           expect.stringMatching(/\.gitignore$/),
           '#\n# ---\n#\ncustom-remote\n',
           'utf8',
         );
-        expect(fsModule.appendFile).toHaveBeenCalledTimes(3);
+        expect(appendFile).toHaveBeenCalledTimes(3);
       });
     });
   });

@@ -6,10 +6,4 @@ export default defineConfig({
   outDir: 'lib',
   format: ['cjs'],
   entry: ['src/cli.ts'],
-  copy: [
-    {
-      from: 'src/common.ignore',
-      to: 'lib',
-    },
-  ],
 });

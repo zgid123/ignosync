@@ -1,47 +1,50 @@
-import * as fsModule from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import type { MockedFunction } from 'vitest';
 
-import { resolveCommonIgnorePath } from '../../utils/common-ignore';
+import { getCommonIgnoreContent } from '../../utils/common-ignore';
+import { isDevMode } from '../../utils/env';
 
 vi.mock('node:fs/promises', () => {
   return {
-    access: vi.fn(),
+    readFile: vi.fn(),
   };
 });
 
-describe('#resolveCommonIgnorePath', () => {
-  let mockedAccess: MockedFunction<typeof fsModule.access>;
+vi.mock('../../utils/env', () => {
+  return {
+    isDevMode: vi.fn(),
+  };
+});
+
+describe('#getCommonIgnoreContent', () => {
+  let mockedReadFile: MockedFunction<typeof readFile>;
+  let mockedIsDevMode: MockedFunction<typeof isDevMode>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedAccess = vi.mocked(fsModule.access);
+    mockedReadFile = vi.mocked(readFile);
+    mockedIsDevMode = vi.mocked(isDevMode);
   });
 
-  it('returns first existing common.ignore path', async () => {
-    mockedAccess.mockResolvedValue(undefined);
+  it('reads from local file when in dev mode', async () => {
+    mockedIsDevMode.mockReturnValue(true);
+    mockedReadFile.mockResolvedValue('local content');
 
-    const result = await resolveCommonIgnorePath();
+    const result = await getCommonIgnoreContent();
 
-    expect(result).toMatch(/common\.ignore$/);
-    expect(mockedAccess).toHaveBeenCalledTimes(1);
-  });
-
-  it('returns fallback path when first path does not exist', async () => {
-    mockedAccess
-      .mockRejectedValueOnce(new Error('ENOENT'))
-      .mockResolvedValueOnce(undefined);
-
-    const result = await resolveCommonIgnorePath();
-
-    expect(result).toMatch(/common\.ignore$/);
-    expect(mockedAccess).toHaveBeenCalledTimes(2);
-  });
-
-  it('throws when no path exists', async () => {
-    mockedAccess.mockRejectedValue(new Error('ENOENT'));
-
-    await expect(resolveCommonIgnorePath()).rejects.toThrow(
-      'Cannot find common.ignore file',
+    expect(result).toBe('local content');
+    expect(mockedReadFile).toHaveBeenCalledWith(
+      expect.stringMatching(/templates\/common\/common\.ignore$/),
+      'utf8',
     );
+  });
+
+  it('fetches from remote URL when not in dev mode', async () => {
+    mockedIsDevMode.mockReturnValue(false);
+
+    const result = await getCommonIgnoreContent();
+
+    expect(result).toBe('node_modules\n');
+    expect(mockedReadFile).not.toHaveBeenCalled();
   });
 });

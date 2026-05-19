@@ -1,21 +1,23 @@
-import { access } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import axios from 'axios';
 
-export async function resolveCommonIgnorePath(): Promise<string> {
-  const commonIgnorePaths = [
-    resolve(__dirname, './common.ignore'),
-    resolve(__dirname, '../common.ignore'),
-  ];
+import { COMMON_IGNORE_RAW_URL } from '../constants';
+import { isDevMode } from './env';
 
-  for (const commonIgnorePath of commonIgnorePaths) {
-    try {
-      await access(commonIgnorePath);
+export async function getCommonIgnoreContent(): Promise<string> {
+  const isDev = isDevMode();
 
-      return commonIgnorePath;
-    } catch {
-      // Ignore ENOENT errors
-    }
+  if (isDev) {
+    const commonIgnorePath = resolve(
+      __dirname,
+      '../../templates/common/common.ignore',
+    );
+
+    return await readFile(commonIgnorePath, 'utf8');
   }
 
-  throw new Error('Cannot find common.ignore file');
+  const response = await axios.get<string>(COMMON_IGNORE_RAW_URL);
+
+  return response.data;
 }

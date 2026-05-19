@@ -1,13 +1,12 @@
-import { readFile } from 'node:fs/promises';
 import { Command } from 'commander';
 import prompts from 'prompts';
 
 import {
   fetchTemplateContents,
+  getCommonIgnoreContent,
   getCustomIgnoreSection,
   getGitIgnorePath,
   loadTemplateFiles,
-  resolveCommonIgnorePath,
   writeGeneratedGitIgnore,
 } from '../utils';
 
@@ -45,8 +44,7 @@ export async function executeInitCommand(): Promise<void> {
     selectedTemplateFiles,
     templatesDirectoryPath,
   });
-  const commonIgnorePath = await resolveCommonIgnorePath();
-  const commonIgnoreContent = await readFile(commonIgnorePath, 'utf8');
+  const commonIgnoreContent = await getCommonIgnoreContent();
   await writeGeneratedGitIgnore({
     gitIgnorePath,
     fetchedTemplates,
