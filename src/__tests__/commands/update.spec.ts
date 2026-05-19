@@ -1,4 +1,10 @@
-import * as fsModule from 'node:fs/promises';
+import {
+  access,
+  appendFile,
+  readdir,
+  readFile,
+  writeFile,
+} from 'node:fs/promises';
 import type { MockedFunction } from 'vitest';
 
 import { executeUpdateCommand } from '../../commands/update';
@@ -14,16 +20,16 @@ vi.mock('node:fs/promises', () => {
 });
 
 describe('#executeUpdateCommand', () => {
-  let mockedAccess: MockedFunction<typeof fsModule.access>;
-  let mockedReadDir: MockedFunction<typeof fsModule.readdir>;
-  let mockedReadFile: MockedFunction<typeof fsModule.readFile>;
+  let mockedAccess: MockedFunction<typeof access>;
+  let mockedReadDir: MockedFunction<typeof readdir>;
+  let mockedReadFile: MockedFunction<typeof readFile>;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockedAccess = vi.mocked(fsModule.access);
-    mockedReadDir = vi.mocked(fsModule.readdir);
-    mockedReadFile = vi.mocked(fsModule.readFile);
+    mockedAccess = vi.mocked(access);
+    mockedReadDir = vi.mocked(readdir);
+    mockedReadFile = vi.mocked(readFile);
 
     mockedAccess.mockResolvedValue(undefined);
   });
@@ -37,9 +43,19 @@ describe('#executeUpdateCommand', () => {
       process.env.GIT_IGNORE_DEV = 'true';
 
       mockedReadDir.mockResolvedValue([
-        'Node.js',
-        'Vitest',
-      ] as unknown as Awaited<ReturnType<typeof fsModule.readdir>>);
+        {
+          name: 'Node.js',
+          isFile: () => true,
+        },
+        {
+          name: 'Vitest',
+          isFile: () => true,
+        },
+        {
+          name: 'common',
+          isFile: () => false,
+        },
+      ] as unknown as Awaited<ReturnType<typeof readdir>>);
       mockedReadFile.mockImplementation(async (filePath) => {
         const filePathValue = String(filePath);
 
@@ -47,7 +63,7 @@ describe('#executeUpdateCommand', () => {
           return '#\n# -- common\n#\nold-common\n#\n# -- Node.js\n#\nold-node\n#\n# ---\n#\ncustom-local\n';
         }
 
-        if (filePathValue.endsWith('/common.ignore')) {
+        if (filePathValue.endsWith('/templates/common/common.ignore')) {
           return '.DS_Store\n';
         }
 
@@ -60,24 +76,24 @@ describe('#executeUpdateCommand', () => {
 
       await executeUpdateCommand();
 
-      expect(fsModule.writeFile).toHaveBeenCalledWith(
+      expect(writeFile).toHaveBeenCalledWith(
         expect.stringMatching(/\.gitignore-local$/),
         '',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+      expect(appendFile).toHaveBeenNthCalledWith(
         1,
         expect.stringMatching(/\.gitignore-local$/),
         '#\n# -- common\n#\n.DS_Store\n',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+      expect(appendFile).toHaveBeenNthCalledWith(
         2,
         expect.stringMatching(/\.gitignore-local$/),
         '#\n# -- Node.js\n#\nnode_modules\n',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+      expect(appendFile).toHaveBeenNthCalledWith(
         3,
         expect.stringMatching(/\.gitignore-local$/),
         '#\n# ---\n#\ncustom-local\n',
@@ -95,37 +111,29 @@ describe('#executeUpdateCommand', () => {
           return '#\n# -- common\n#\nold-common\n#\n# -- osx.ignore\n#\nold-osx\n#\n# ---\n#\ncustom-remote\n';
         }
 
-        if (filePathValue.endsWith('/common.ignore')) {
-          return '.DS_Store\n';
-        }
-
         throw new Error(`Unexpected file path: ${filePathValue}`);
       });
 
       await executeUpdateCommand();
 
-      expect(fsModule.readFile).toHaveBeenCalledWith(
-        expect.stringMatching(/common\.ignore$/),
-        'utf8',
-      );
-      expect(fsModule.writeFile).toHaveBeenCalledWith(
+      expect(writeFile).toHaveBeenCalledWith(
         expect.stringMatching(/\.gitignore$/),
         '',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+      expect(appendFile).toHaveBeenNthCalledWith(
         1,
         expect.stringMatching(/\.gitignore$/),
-        '#\n# -- common\n#\n.DS_Store\n',
+        '#\n# -- common\n#\nnode_modules\n',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+      expect(appendFile).toHaveBeenNthCalledWith(
         2,
         expect.stringMatching(/\.gitignore$/),
         '#\n# -- osx.ignore\n#\n.DS_Store\n',
         'utf8',
       );
-      expect(fsModule.appendFile).toHaveBeenNthCalledWith(
+      expect(appendFile).toHaveBeenNthCalledWith(
         3,
         expect.stringMatching(/\.gitignore$/),
         '#\n# ---\n#\ncustom-remote\n',

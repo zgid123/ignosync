@@ -1,0 +1,6 @@
+allowBuilds:
+  esbuild: false
+  lefthook: false
+  msw: false
+minimumReleaseAgeExclude:
+  - tsx@4.22.3

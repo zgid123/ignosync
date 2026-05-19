@@ -3,6 +3,7 @@ import { setupServer } from 'msw/node';
 
 import type { IGithubTemplateFile } from '../../commands/interface';
 import {
+  COMMON_IGNORE_RAW_URL,
   GITHUB_TEMPLATES_API_URL,
   GITHUB_TEMPLATES_RAW_BASE_URL,
 } from '../../constants';
@@ -17,6 +18,7 @@ const defaultGithubTemplateList: IGithubTemplateFile[] = [
 ];
 
 const defaultFileContentsByName: Record<string, string> = {
+  'common.ignore': 'node_modules\n',
   'osx.ignore': '.DS_Store\n',
 };
 
@@ -29,5 +31,8 @@ export const server = setupServer(
     const content = defaultFileContentsByName[fileName] ?? '';
 
     return new HttpResponse(content);
+  }),
+  http.get(COMMON_IGNORE_RAW_URL, () => {
+    return new HttpResponse('node_modules\n');
   }),
 );

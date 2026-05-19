@@ -1,4 +1,4 @@
-import * as fsModule from 'node:fs/promises';
+import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import type { MockedFunction } from 'vitest';
 
 import {
@@ -35,13 +35,13 @@ describe('#getGitIgnorePath', () => {
 });
 
 describe('#writeGeneratedGitIgnore', () => {
-  let mockedWriteFile: MockedFunction<typeof fsModule.writeFile>;
-  let mockedAppendFile: MockedFunction<typeof fsModule.appendFile>;
+  let mockedWriteFile: MockedFunction<typeof writeFile>;
+  let mockedAppendFile: MockedFunction<typeof appendFile>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedWriteFile = vi.mocked(fsModule.writeFile);
-    mockedAppendFile = vi.mocked(fsModule.appendFile);
+    mockedWriteFile = vi.mocked(writeFile);
+    mockedAppendFile = vi.mocked(appendFile);
   });
 
   it('writes common, template sections, and custom section', async () => {
@@ -101,11 +101,11 @@ describe('#extractSectionNames', () => {
 });
 
 describe('#getCustomIgnoreSection', () => {
-  let mockedReadFile: MockedFunction<typeof fsModule.readFile>;
+  let mockedReadFile: MockedFunction<typeof readFile>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedReadFile = vi.mocked(fsModule.readFile);
+    mockedReadFile = vi.mocked(readFile);
   });
 
   it('returns empty string when file cannot be read', async () => {

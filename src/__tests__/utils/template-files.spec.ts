@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/style/useNamingConvention: ignore */
-import * as fsModule from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import axios from 'axios';
 import type { MockedFunction } from 'vitest';
 
@@ -25,12 +25,12 @@ vi.mock('node:fs/promises', () => {
 });
 
 describe('#loadTemplateFiles', () => {
-  let mockedReadDir: MockedFunction<typeof fsModule.readdir>;
+  let mockedReadDir: MockedFunction<typeof readdir>;
   let mockedAxiosGet: MockedFunction<typeof axios.get>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedReadDir = vi.mocked(fsModule.readdir);
+    mockedReadDir = vi.mocked(readdir);
     mockedAxiosGet = vi.mocked(axios.get);
   });
 
@@ -38,11 +38,23 @@ describe('#loadTemplateFiles', () => {
     delete process.env.GIT_IGNORE_DEV;
   });
 
-  it('loads local templates in dev mode', async () => {
+  it('loads local templates in dev mode and filters directories', async () => {
     process.env.GIT_IGNORE_DEV = 'true';
-    mockedReadDir.mockResolvedValue(['Vitest', 'Node.js'] as unknown as Awaited<
-      ReturnType<typeof fsModule.readdir>
-    >);
+
+    mockedReadDir.mockResolvedValue([
+      {
+        name: 'Vitest',
+        isFile: () => true,
+      },
+      {
+        name: 'Node.js',
+        isFile: () => true,
+      },
+      {
+        name: 'common',
+        isFile: () => false,
+      },
+    ] as unknown as Awaited<ReturnType<typeof readdir>>);
 
     const result = await loadTemplateFiles();
 
@@ -82,12 +94,12 @@ describe('#loadTemplateFiles', () => {
 });
 
 describe('#fetchTemplateContents', () => {
-  let mockedReadFile: MockedFunction<typeof fsModule.readFile>;
+  let mockedReadFile: MockedFunction<typeof readFile>;
   let mockedAxiosGet: MockedFunction<typeof axios.get>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedReadFile = vi.mocked(fsModule.readFile);
+    mockedReadFile = vi.mocked(readFile);
     mockedAxiosGet = vi.mocked(axios.get);
   });
 
