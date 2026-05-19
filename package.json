@@ -1,6 +1,6 @@
 {
   "name": "ignosync",
-  "version": "0.0.3",
+  "version": "0.0.2",
   "description": "Create .gitignore for specific TechStacks",
   "author": "Alpha",
   "repository": {
@@ -33,7 +33,7 @@
     "test": "vitest run --coverage",
     "update-packages": "pnpm update -i -r --latest",
     "build": "tsdown",
-    "release": "pnpm build && changeset version && NPM_CONFIG_ENGINE_STRICT=false changeset publish",
+    "release": "pnpm build && changeset version && NPM_CONFIG_FORCE=true changeset publish",
     "set-release": "changeset",
     "local:run": "GIT_IGNORE_DEV=true tsx src/cli.ts"
   },
