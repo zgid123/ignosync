@@ -4,6 +4,12 @@
 
 ### Patch Changes
 
+- [#27](https://github.com/zgid123/ignosync/pull/27) [`fc165d0`](https://github.com/zgid123/ignosync/commit/fc165d0f8b4607f452179e10b25951105e09e26a) Thanks [@zgid123](https://github.com/zgid123)! - release
+
+## 0.0.3
+
+### Patch Changes
+
 - [#24](https://github.com/zgid123/ignosync/pull/24) [`d7f7dad`](https://github.com/zgid123/ignosync/commit/d7f7dadc645a53162819300b8b8d24a23f10ee5d) Thanks [@zgid123](https://github.com/zgid123)! - release
 
 ## 0.0.2
