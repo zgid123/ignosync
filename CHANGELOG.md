@@ -1,5 +1,11 @@
 # ignosync
 
+## 0.0.3
+
+### Patch Changes
+
+- [#24](https://github.com/zgid123/ignosync/pull/24) [`d7f7dad`](https://github.com/zgid123/ignosync/commit/d7f7dadc645a53162819300b8b8d24a23f10ee5d) Thanks [@zgid123](https://github.com/zgid123)! - release
+
 ## 0.0.2
 
 ### Patch Changes
